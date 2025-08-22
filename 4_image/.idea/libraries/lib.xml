@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="file:///usr/lib/jvm/default-java/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <NATIVE>
+      <root url="file:///usr/lib/jvm/default-java/lib" />
+    </NATIVE>
+    <SOURCES />
+    <jarDirectory url="file:///usr/lib/jvm/default-java/lib" recursive="false" />
+  </library>
+</component>
