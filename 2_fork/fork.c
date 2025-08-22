@@ -11,7 +11,7 @@ int main() {
 	for (size_t i = 0; i < 10; i++) {
 		if ((pids[i] = fork()) < 0) {
 			printf("Fork failed\n");
-			return 1;
+			exit(1);
 		} else if (pids[i] == 0) {
 			printf("I'm the child numer %zu (pid %d)\n", i, getpid());
 			exit(0);
