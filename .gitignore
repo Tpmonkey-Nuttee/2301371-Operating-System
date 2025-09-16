@@ -1,7 +1,7 @@
 /web_server
 /2_fork/penek
 /4_image/.idea
-/3_web_server/server
+/3_webserver/server
 
 # image for testing
 *.png
