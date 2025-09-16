@@ -12,17 +12,22 @@
 #define MAX_HDR_SIZE 512
 
 
-int get_file_size(const char *path) {
-	// TODO: don't open file twice. but fuck this for now
+void response(int client, const char *path) {
+	// Get file size for content length
 	int size;
 	FILE *f = fopen(path, "r");
+	if (!f) {
+		perror("File Open");
+		return;
+	}
+	
 	fseek(f, 0, SEEK_END);
 	size = ftell(f);
-	fclose(f);
-	return size;
-}
 
-void send_ok_header(int client, int size) {
+	// Set file pointer back to 0
+	fseek(f, 0, SEEK_SET);
+	
+	// Send header
 	char hdr[MAX_HDR_SIZE];
 	sprintf(
 			hdr,
@@ -35,16 +40,8 @@ void send_ok_header(int client, int size) {
 	);
         
 	send(client, hdr, strlen(hdr), 0);
-}
-
-
-void send_file(int client, const char *path) {
-	FILE *f = fopen(path, "r");
-	if (!f) {
-		perror("open html");
-		return;
-	}
-
+	
+	// Send file content
 	char buff[BUFFER_SIZE];
 	size_t n;
 	while ((n = fread(buff, 1, sizeof buff, f)) > 0) {
@@ -57,11 +54,9 @@ void send_file(int client, const char *path) {
 void accept_client_thread(int* client) {
 	printf("Accept client %d\n", *client);
 	
-	int size = get_file_size("index.html");
-	send_ok_header(*client, size);	
-	send_file(*client, "index.html");
-	
+	response(*client, "index.html");
 	close(*client);
+
 	printf("Client closed %d\n", *client);
 }
 
