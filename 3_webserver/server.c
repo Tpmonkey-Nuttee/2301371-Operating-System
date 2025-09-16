@@ -1,3 +1,6 @@
+// This web server can only be compile on linux system.
+// Windows or Mac is not supported
+
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
@@ -12,7 +15,7 @@
 #define MAX_HDR_SIZE 512
 
 
-void response(int client, const char *path) {
+void handle_request(int *client, const char *path) {
 	// Get file size for content length
 	int size;
 	FILE *f = fopen(path, "r");
@@ -31,33 +34,26 @@ void response(int client, const char *path) {
 	char hdr[MAX_HDR_SIZE];
 	sprintf(
 			hdr,
-		       	"HTTP/1.1 200 OK\r\n"
+		    "HTTP/1.1 200 OK\r\n"
 			"Content-Type: text/html\r\n"
 			"Connection: close\r\n"
 			"Content-Length: %d\r\n"
 			"\r\n",
 			size
 	);
-        
-	send(client, hdr, strlen(hdr), 0);
+
+	send(*client, hdr, strlen(hdr), 0);
 	
 	// Send file content
 	char buff[BUFFER_SIZE];
 	size_t n;
 	while ((n = fread(buff, 1, sizeof buff, f)) > 0) {
-		send(client, buff, n, 0);
+		send(*client, buff, n, 0);
 	}
 	fclose(f);
-}
+	close(*client)
 
-
-void accept_client_thread(int* client) {
-	printf("Accept client %d\n", *client);
-	
-	response(*client, "index.html");
-	close(*client);
-
-	printf("Client closed %d\n", *client);
+	printf("Handled request %d\n", *client)
 }
 
 
@@ -98,7 +94,9 @@ int main() {
 
 	// Thread
 	pthread_t threads[NUM_THREADS];
-	// TODO: THREADING AAAAA
+	// TODO: implement pool for threading
+	// TODO: We serve static file so maybe don't spam open 
+	// and store everything in memory (but it's c so it's fast enough (maybe))
 
 	printf("Listening on http://localhost:%d\n", PORT);
 	struct sockaddr_in cli;
@@ -110,7 +108,7 @@ int main() {
 			perror("accept");
 			continue;
 		}
-		accept_client_thread(&client);
+		handle_request(&client, "index.html");
 
 	}
 	
