@@ -2,6 +2,8 @@
 /2_fork/penek
 /4_image/.idea
 /3_webserver/server
+a.out
+test.bash
 
 # image for testing
 *.png
