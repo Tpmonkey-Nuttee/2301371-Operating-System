@@ -1,16 +1,107 @@
+#include "server.h"
+
 #include <stdio.h>
+#include <stdbool.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <threads.h>
+#include <pthread.h>
 
-#define PORT 8080
-#define BUFFER_SIZE 1024
-#define NUM_THREADS 8
-#define MAX_HDR_SIZE 512
 
+int server_fd;
+
+
+pthread_t threads[NUM_THREADS] = {0};
+int client_queue[QUEUE_MAX_SIZE] = {0};
+int last = QUEUE_MAX_SIZE - 1;
+pthread_mutex_t lock;
+bool running = true;
+
+Queue q = {.items = {0}, .first = 0, .last = 0};
+//q->front = -1;
+//q->rear = 0;
+
+// TODO: implement a circular queue. (rn its broken :( )
+
+bool isEmpty(Queue* q) {
+	return q->first == q->last;
+}
+
+bool isFull(Queue* q) {
+	return q->last < q->first;
+}
+
+void enqueue(Queue* q, int client) {
+	while (isFull(q)) {}
+
+	q->items[q->rear] = client;
+	q->rear++;
+}
+
+int pop(Queue* q) {
+	while (isEmpty(q)) {}
+	int client = q->items[q->front+1];
+	q->front++;
+	return client;
+}
+
+
+void init_thread() {
+//	printf("init last %d", last);
+	pthread_mutex_init(&lock, NULL);
+	for (int i = 0; i < NUM_THREADS; i++) {
+		pthread_create(&threads[i], NULL, thread_loop, NULL); 
+	}
+}
+
+void thread_teardown() {
+	void *status;
+	// running = false;
+	for (int i = 0; i < NUM_THREADS; i++) {
+		pthread_join(threads[i], &status);
+	}
+
+	pthread_mutex_destroy(&lock);
+	pthread_exit(NULL);
+}
+
+/*
+
+void wait_insert_queue(int client) {
+	// Spin till queue has space
+	while (last == -1) {}
+
+	client_queue[last] = client;
+	--last;
+//	printf("after insert %d\n", last);
+}
+
+int pop_queue() {
+	// Empty queue, spin
+	while (last == QUEUE_MAX_SIZE - 1) {}
+
+	++last;
+	int pop = client_queue[last];
+//	printf("after pop %d\n", last);
+	return pop;
+} */
+
+void *thread_loop() {
+	while (running) {
+		pthread_mutex_lock(&lock);
+		int client = pop(&q);
+		printf("Aquired lock and popped %d\n", client);
+		pthread_mutex_unlock(&lock);
+	
+		response(client, "index.html");
+		close(client);
+		printf("Client closed: %d\n", client);
+	
+	}
+}
 
 void response(int client, const char *path) {
 	// Get file size for content length
@@ -50,7 +141,7 @@ void response(int client, const char *path) {
 	fclose(f);
 }
 
-
+/*
 void accept_client_thread(int* client) {
 	printf("Accept client %d\n", *client);
 	
@@ -58,7 +149,7 @@ void accept_client_thread(int* client) {
 	close(*client);
 
 	printf("Client closed %d\n", *client);
-}
+}*/
 
 
 int create_socket() {
@@ -94,26 +185,29 @@ int create_socket() {
 }
 	
 int main() {
-	int server_fd = create_socket();
+	// signal(SIGINT, handle_sigint);
+	server_fd = create_socket();
 
 	// Thread
-	pthread_t threads[NUM_THREADS];
-	// TODO: THREADING AAAAA
+	init_thread();
 
 	printf("Listening on http://localhost:%d\n", PORT);
 	struct sockaddr_in cli;
 	socklen_t len = sizeof cli;
 
-	for (;;) {
+	while (running) {
 		int client = accept(server_fd, (struct sockaddr*)&cli, &len);
 		if (client < 0) {
 			perror("accept");
 			continue;
 		}
-		accept_client_thread(&client);
+		// accept_client_thread(&client);
+//		wait_insert_queue(client);
+		enqueue(&q, client);
 
 	}
 	
+	thread_teardown();
 	close(server_fd);
 	return 0;
 }
