@@ -13,44 +13,40 @@
 
 int server_fd;
 
-
 pthread_t threads[NUM_THREADS] = {0};
 int client_queue[QUEUE_MAX_SIZE] = {0};
 int last = QUEUE_MAX_SIZE - 1;
 pthread_mutex_t lock;
 bool running = true;
 
-Queue q = {.items = {0}, .first = 0, .last = 0};
-//q->front = -1;
-//q->rear = 0;
+Queue q = {.items = {0}, .write = 0, .read = 0};
 
-// TODO: implement a circular queue. (rn its broken :( )
 
 bool isEmpty(Queue* q) {
-	return q->first == q->last;
+	return q->write == q->read;
 }
 
 bool isFull(Queue* q) {
-	return q->last < q->first;
+	return (q->write + 1) % QUEUE_MAX_SIZE == q->read;
 }
 
 void enqueue(Queue* q, int client) {
 	while (isFull(q)) {}
-
-	q->items[q->rear] = client;
-	q->rear++;
+	
+	q->items[q->write] = client;
+	q->write = (q->write + 1) % QUEUE_MAX_SIZE;
 }
 
 int pop(Queue* q) {
 	while (isEmpty(q)) {}
-	int client = q->items[q->front+1];
-	q->front++;
+	
+	int client = q->items[q->read];
+	q->read = (q->read + 1) % QUEUE_MAX_SIZE;
 	return client;
 }
 
 
 void init_thread() {
-//	printf("init last %d", last);
 	pthread_mutex_init(&lock, NULL);
 	for (int i = 0; i < NUM_THREADS; i++) {
 		pthread_create(&threads[i], NULL, thread_loop, NULL); 
@@ -59,7 +55,6 @@ void init_thread() {
 
 void thread_teardown() {
 	void *status;
-	// running = false;
 	for (int i = 0; i < NUM_THREADS; i++) {
 		pthread_join(threads[i], &status);
 	}
@@ -67,27 +62,6 @@ void thread_teardown() {
 	pthread_mutex_destroy(&lock);
 	pthread_exit(NULL);
 }
-
-/*
-
-void wait_insert_queue(int client) {
-	// Spin till queue has space
-	while (last == -1) {}
-
-	client_queue[last] = client;
-	--last;
-//	printf("after insert %d\n", last);
-}
-
-int pop_queue() {
-	// Empty queue, spin
-	while (last == QUEUE_MAX_SIZE - 1) {}
-
-	++last;
-	int pop = client_queue[last];
-//	printf("after pop %d\n", last);
-	return pop;
-} */
 
 void *thread_loop() {
 	while (running) {
@@ -141,17 +115,6 @@ void response(int client, const char *path) {
 	fclose(f);
 }
 
-/*
-void accept_client_thread(int* client) {
-	printf("Accept client %d\n", *client);
-	
-	response(*client, "index.html");
-	close(*client);
-
-	printf("Client closed %d\n", *client);
-}*/
-
-
 int create_socket() {
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_fd < 0) {
@@ -185,7 +148,6 @@ int create_socket() {
 }
 	
 int main() {
-	// signal(SIGINT, handle_sigint);
 	server_fd = create_socket();
 
 	// Thread
@@ -201,10 +163,8 @@ int main() {
 			perror("accept");
 			continue;
 		}
-		// accept_client_thread(&client);
-//		wait_insert_queue(client);
-		enqueue(&q, client);
 
+		enqueue(&q, client);
 	}
 	
 	thread_teardown();

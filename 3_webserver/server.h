@@ -8,8 +8,8 @@
 
 typedef struct {
 	int items[QUEUE_MAX_SIZE];
-	int first;
-	int last;
+	int write;
+	int read;
 } Queue;
 
 bool isEmpty(Queue* q);
