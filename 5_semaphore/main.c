@@ -9,9 +9,7 @@
 #include <stdlib.h>
 
 int x = 0;
-
 sem_t w_mutex;
-
 
 
 void wait_a_sec() {
@@ -26,23 +24,17 @@ void wait_a_sec() {
 
 void *writer() {
 	sem_wait(&w_mutex);
-
 	wait_a_sec();
-
 	x++;
 	printf("Write x = %i\n", x);
-	
 	sem_post(&w_mutex);
 }
 
 
 void *reader() {
 	wait_a_sec();
-
 	sem_wait(&w_mutex); // ?????
-	
 	printf("Read  x = %i\n", x);
-	
 	sem_post(&w_mutex);
 }
 
