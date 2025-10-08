@@ -35,8 +35,6 @@ void *writer() {
 
 
 void *reader() {
-<<<<<<< HEAD
-
 	sem_wait(&r_mutex);
 	++read_count;
 	if (read_count == 1) {sem_wait(&w_mutex);}
@@ -52,15 +50,7 @@ void *reader() {
 	--read_count;
 	if (read_count == 0) {sem_post(&w_mutex);}
 	sem_post(&r_mutex);
-	
-=======
-	wait_a_sec();
-	sem_wait(&w_mutex); // ?????
-	printf("Read  x = %i\n", x);
-	sem_post(&w_mutex);
->>>>>>> 9e8dee459dbb48152cc3b4efcbd45543467a1ace
 }
-
 
 int main() {
 	pthread_t threads[1000];
