@@ -41,21 +41,15 @@ void *writer() {
 
 void *reader() {
 
-	sem_wait(&r_mutex);
-	++read_count;
-	if (read_count == 1) {sem_wait(&w_mutex);}
-	sem_post(&r_mutex);
 
 	
 	// This is a critical section
 	wait_a_sec();
+
+	sem_wait(&w_mutex);
 	printf("Read  x = %i\n", x);
 	// -----------
-	
-	sem_wait(&r_mutex);
-	--read_count;
-	if (read_count == 0) {sem_post(&w_mutex);}
-	sem_post(&r_mutex);
+	sem_post(&w_mutex);
 	
 }
 
