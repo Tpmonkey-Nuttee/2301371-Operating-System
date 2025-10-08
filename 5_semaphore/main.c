@@ -10,12 +10,10 @@
 
 
 int x = 0;
-
 sem_t w_mutex;
 sem_t r_mutex;
 sem_t mutex;
 int read_count = 0;
-
 
 void wait_a_sec() {
 	time_t start, now;
@@ -29,17 +27,15 @@ void wait_a_sec() {
 
 void *writer() {
 	sem_wait(&w_mutex);
-
 	wait_a_sec();
-
 	x++;
 	printf("Write x = %i\n", x);
-	
 	sem_post(&w_mutex);
 }
 
 
 void *reader() {
+<<<<<<< HEAD
 
 	sem_wait(&r_mutex);
 	++read_count;
@@ -57,6 +53,12 @@ void *reader() {
 	if (read_count == 0) {sem_post(&w_mutex);}
 	sem_post(&r_mutex);
 	
+=======
+	wait_a_sec();
+	sem_wait(&w_mutex); // ?????
+	printf("Read  x = %i\n", x);
+	sem_post(&w_mutex);
+>>>>>>> 9e8dee459dbb48152cc3b4efcbd45543467a1ace
 }
 
 
