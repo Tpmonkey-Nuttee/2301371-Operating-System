@@ -67,7 +67,7 @@ void *writer(void *arg) {
 	sem_wait(&r_mutex);
 
 	wait_a_sec();
-	x++;
+	++x;
 	printf("no = %-3i x = %i\n", self, x);
 
 	sem_post(&w_mutex);
@@ -85,7 +85,7 @@ void *reader() {
 	sem_post(&mutex);
 
 	wait_a_sec();
-//	printf("Read  x = %i\n", x);
+	printf("Read  x = %i\n", x);
 	
 	sem_wait(&mutex);
 	--read_count;
@@ -114,7 +114,7 @@ int main() {
 	for (int i = 0; i < TOTAL_THREADS; i++) {
 		if (i == random_n[curr]) {
 			pthread_create(&threads[i], NULL, writer, &random_n[curr]);
-			curr++;
+			++curr;
 		}
 		else {
 			pthread_create(&threads[i], NULL, reader, NULL);
