@@ -1,0 +1,6 @@
+[submodule "OS_midterm_grader"]
+	path = OS_midterm_grader
+	url = https://github.com/oransom48/OS_midterm_grader.git
+[submodule "4_image/grader"]
+	path = 4_image/grader
+	url = https://github.com/oransom48/OS_midterm_grader.git

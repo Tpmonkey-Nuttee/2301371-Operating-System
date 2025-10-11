@@ -1,0 +1,3 @@
+#! /bin/bash
+
+java src/Main.java grader/image/grayscale_image/grayscale_lenna_512.png output.png
