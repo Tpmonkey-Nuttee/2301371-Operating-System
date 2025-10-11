@@ -1,12 +1,12 @@
 /web_server
 /2_fork/penek
 /4_image/.idea
+/4_image/*.png
 /3_webserver/server
 a.out
 test.bash
 
-# image for testing
-*.png
+
 
 ### IntelliJ IDEA ###
 out/
