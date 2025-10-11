@@ -8,7 +8,7 @@ import javax.imageio.ImageIO;
 public class Main {
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.out.println("Usage: java Main <input> <output>");
+            System.out.println("Usage: java src/Main <input> <output>");
             return;
         }
 
