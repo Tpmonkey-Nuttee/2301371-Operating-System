@@ -28,38 +28,36 @@ public class Main {
         int height = image.getHeight();
 
         // Use int array to match Python's int32
-        int[][] imgArray = new int[height][width];
-        int[][] ditheredImg = new int[height][width];
+        int[][] inputImage = new int[height][width];
+        int[][] outputArray = new int[height][width];
 
         Raster raster = image.getData();
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                imgArray[y][x] = raster.getSample(x, y, 0) & 0xFF;
+                inputImage[y][x] = raster.getSample(x, y, 0) & 0xFF;
             }
         }
-
-        // Sequential error diffusion
-        int threshold = 128;
+        
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int oldPixel = imgArray[y][x];
-                int newPixel = (oldPixel > threshold) ? 255 : 0;
-                ditheredImg[y][x] = newPixel;
+                int oldPixel = inputImage[y][x];
+                int newPixel = (oldPixel > 128) ? 255 : 0;
+                outputArray[y][x] = newPixel;
                 int quantError = oldPixel - newPixel;
 
                 // Distribute the quantization error to neighboring pixels
                 // Use Math.floorDiv to match Python's // operator
                 if (x + 1 < width) {
-                    imgArray[y][x + 1] += Math.floorDiv(quantError * 7, 16);
+                    inputImage[y][x + 1] += Math.floorDiv(quantError * 7, 16);
                 }
                 if (x - 1 >= 0 && y + 1 < height) {
-                    imgArray[y + 1][x - 1] += Math.floorDiv(quantError * 3, 16);
+                    inputImage[y + 1][x - 1] += Math.floorDiv(quantError * 3, 16);
                 }
                 if (y + 1 < height) {
-                    imgArray[y + 1][x] += Math.floorDiv(quantError * 5, 16);
+                    inputImage[y + 1][x] += Math.floorDiv(quantError * 5, 16);
                 }
                 if (x + 1 < width && y + 1 < height) {
-                    imgArray[y + 1][x + 1] += Math.floorDiv(quantError * 1, 16);
+                    inputImage[y + 1][x + 1] += Math.floorDiv(quantError, 16);
                 }
             }
         }
@@ -68,8 +66,7 @@ public class Main {
         BufferedImage outImg = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                // Clip values like Python does with np.clip(dithered_img, 0, 255)
-                int val = Math.max(0, Math.min(255, ditheredImg[y][x]));
+                int val = Math.max(0, Math.min(255, outputArray[y][x]));
                 int rgb = (val == 0) ? 0x000000 : 0xFFFFFF;
                 outImg.setRGB(x, y, rgb);
             }
