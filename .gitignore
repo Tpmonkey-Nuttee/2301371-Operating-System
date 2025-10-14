@@ -5,7 +5,7 @@
 /3_webserver/server
 a.out
 test.bash
-
+*.class
 
 
 ### IntelliJ IDEA ###
