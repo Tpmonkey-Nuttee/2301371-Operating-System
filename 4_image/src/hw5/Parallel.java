@@ -9,7 +9,7 @@ import java.lang.Thread;
 import java.util.concurrent.locks.*;
 
 
-public class Paralell {
+public class Parallel {
     public static void main(String[] args) {
         if (args.length < 2) {
             System.out.println("Usage: java src/Main <input> <numThreads>");
