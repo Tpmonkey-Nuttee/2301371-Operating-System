@@ -1,6 +1,6 @@
 #! /bin/bash
 
+java src/Main.java grader/image/grayscale_image/grayscale_lenna_512.png output/output_no_thread.png
 
-python3 grader/error_diffusion.py grader/image/grayscale_image/grayscale_lenna_512.png validate.png
-
-python3 grader/bw_similarity.py output/output_10_thread.png validate.png
+javac src/hw5/*.java
+java src/hw5/Paralell grader/image/grayscale_image/grayscale_lenna_512.png 10
