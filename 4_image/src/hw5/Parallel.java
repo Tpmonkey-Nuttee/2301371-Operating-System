@@ -91,7 +91,7 @@ public class Parallel {
         double totalElapsedTime = (totalEndTime - startTime) / 1_000_000.0;
         System.out.printf("Dithering time: %.3f ms%n", totalElapsedTime);
 
-        save(outputArray, width, height, "output_" + numThreads + "_thread.png");
+        save(outputArray, width, height, "output_" + numThreads + "_thread");
     }
 
     public static void save(int[][] outputArray, int width, int height, String fileName) {
