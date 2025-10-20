@@ -68,10 +68,11 @@ public class Parallel {
 
         // -------------------------------------
 
-        long startTime = System.nanoTime();
 
         // Create a thread pool and submit one task for each row
         ExecutorService pool = Executors.newFixedThreadPool(numThreads);
+        long startTime = System.nanoTime();
+
         for (int y = 0; y < height; y++) {
             pool.submit(new MyThread(
                     inputImage, outputArray, y, width, height, pixelLocks, rowProgress
@@ -87,8 +88,8 @@ public class Parallel {
         }
 
         long totalEndTime = System.nanoTime();
-        double totalElapsedTime = (totalEndTime - startTime) / 1_000_000_000.0;
-        System.out.printf("Dithering time: %.3f seconds%n", totalElapsedTime);
+        double totalElapsedTime = (totalEndTime - startTime) / 1_000_000.0;
+        System.out.printf("Dithering time: %.3f ms%n", totalElapsedTime);
 
         save(outputArray, width, height, "output_" + numThreads + "_thread.png");
     }
@@ -106,10 +107,11 @@ public class Parallel {
 
         // Write image out
         try {
-            ImageIO.write(outImg, "png", new File(fileName));
-            System.out.println("Saved image to " + fileName);
+            ImageIO.write(outImg, "png", new File("output/"+fileName+".png"));
         } catch (IOException e) {
-            System.out.println("Cannot write file: " + e);
+            System.out.println("Output error: " + e);
+            return;
         }
+        System.out.println("Saved to: output/" + fileName+".png");
     }
 }

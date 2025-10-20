@@ -32,6 +32,8 @@ public class Main {
         int[][] inputImage = new int[height][width];
         int[][] outputArray = new int[height][width];
 
+        long startTime = System.nanoTime();
+
         // Use getSample() instead of getRGB() to match PIL in Python
         Raster raster = image.getData();
         for (int y = 0; y < height; y++) {
@@ -63,6 +65,10 @@ public class Main {
                 }
             }
         }
+
+        long totalEndTime = System.nanoTime();
+        double totalElapsedTime = (totalEndTime - startTime) / 1_000_000.0;
+        System.out.printf("Dithering time: %.3f ms%n", totalElapsedTime);
 
         // Save processed image
         BufferedImage outImg = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
