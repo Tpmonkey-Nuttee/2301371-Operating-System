@@ -1,6 +1,3 @@
 #! /bin/bash
 
 java src/Main.java grader/image/grayscale_image/grayscale_lenna_512.png output/output_no_thread.png
-
-javac src/hw5/*.java
-java src/hw5/Parallel grader/image/grayscale_image/grayscale_lenna_512.png 2

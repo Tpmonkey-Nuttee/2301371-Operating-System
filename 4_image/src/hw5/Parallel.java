@@ -5,20 +5,22 @@ import java.io.File;
 import java.io.IOException;
 import java.awt.image.Raster;
 import javax.imageio.ImageIO;
-import java.lang.Thread;
-import java.util.concurrent.locks.*;
-
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parallel {
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.out.println("Usage: java src/Main <input> <numThreads>");
+            System.out.println("Usage: java Parallel <input> <numThreads>");
             return;
         }
 
         String fileName = args[0];
         int numThreads = Integer.parseInt(args[1]);
         System.out.println("Input file: " + fileName);
+        System.out.println("Using " + numThreads + " threads.");
 
         // Open input image
         BufferedImage image = null;
@@ -40,52 +42,56 @@ public class Parallel {
         Raster raster = image.getData();
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                inputImage[y][x] = raster.getSample(x, y, 0) & 0xFF;
+                inputImage[y][x] = raster.getSample(x, y, 0);
             }
         }
 
-        // Locks
-        Object[] locks = new Object[width];
-        for (int i = 0; i < width; i++) {
-            locks[i] = new Object();
-        }
-        Lock tLock = new ReentrantLock();
-//        Lock[] locksT = new Lock[numThreads];
-//        for (int i = 0; i < numThreads; i++) {
-//            locksT[i] = new Lock();
-//        }
+        System.out.println("Image dimensions: " + width + "x" + height);
 
-        System.out.println("Processing with " + numThreads + " threads...");
+        // --- New Synchronization Primitives ---
+
+        // 1. A 2D array of locks, one for each pixel, for atomic writes.
+        Object[][] pixelLocks = new Object[height][width];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                pixelLocks[y][x] = new Object();
+            }
+        }
+
+        // 2. An array to track the progress of each row-processing task.
+        // -1 means the row hasn't started.
+        // A value of 'x' means processing for pixel (x, y) is complete.
+        AtomicInteger[] rowProgress = new AtomicInteger[height];
+        for (int y = 0; y < height; y++) {
+            rowProgress[y] = new AtomicInteger(-1);
+        }
+
+        // -------------------------------------
+
+
+        // Create a thread pool and submit one task for each row
+        ExecutorService pool = Executors.newFixedThreadPool(numThreads);
         long startTime = System.nanoTime();
 
-        // Create and run threads
-        MyThread[] threads = new MyThread[numThreads];
-        boolean isLocked = false;
-        for (int i = 0; i < height; i += numThreads) {
-            for (int j = 0; j < numThreads && i + j < height; j++) {
-                if (threads[j] != null) {
-                    try {
-                        threads[j].join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                isLocked = tLock.trylock();
-                while (isLocked) {
-                    isLocked = tLock.trylock();
-                }
-                System.out.println("LOCKING "+j);
-                threads[j] = new MyThread(
-                        inputImage, outputArray, i + j, width, height, locks, tLock
-                );
-                threads[j].start();
-            }
+        for (int y = 0; y < height; y++) {
+            pool.submit(new MyThread(
+                    inputImage, outputArray, y, width, height, pixelLocks, rowProgress
+            ));
         }
-        long totalEndTime = System.nanoTime();
-        double totalElapsedTime = (totalEndTime - startTime) / 1_000_000_000.0;
-        System.out.printf("Total time (including I/O): %.3f seconds%n", totalElapsedTime);
 
-        save(outputArray, width, height, "output_"+numThreads+"_thread");
+        // Wait for all tasks to complete
+        pool.shutdown();
+        try {
+            pool.awaitTermination(1, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        long totalEndTime = System.nanoTime();
+        double totalElapsedTime = (totalEndTime - startTime) / 1_000_000.0;
+        System.out.printf("Dithering time: %.3f ms%n", totalElapsedTime);
+
+        save(outputArray, width, height, "output_" + numThreads + "_thread");
     }
 
     public static void save(int[][] outputArray, int width, int height, String fileName) {
@@ -106,7 +112,6 @@ public class Parallel {
             System.out.println("Output error: " + e);
             return;
         }
-
         System.out.println("Saved to: output/" + fileName+".png");
     }
 }
